@@ -2,7 +2,8 @@ from flask import Flask, jsonify, request, make_response
 from functools import wraps
 import secrets
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import date, datetime  # Utilisez `date` pour obtenir la date actuelle
+from API.rabbit__mq import *
 
 # Initialisation de l'application Flask
 app = Flask(__name__)
@@ -106,10 +107,9 @@ def get_orders():
         "client_id": c.client_id,
         "date_commande": c.date_commande.strftime('%Y-%m-%d'),
         "statut": c.statut,
-        "montant_total": str(c.montant_total)
+        "montant_total": str(c.montant_total)  # Convertir Decimal en string
     } for c in commandes])
 
-# Endpoint to get a specific order by ID
 @app.route('/orders/<int:id>', methods=['GET'])
 @token_required
 def get_order(id):
@@ -120,42 +120,33 @@ def get_order(id):
             "client_id": commande.client_id,
             "date_commande": commande.date_commande.strftime('%Y-%m-%d'),
             "statut": commande.statut,
-            "montant_total": str(commande.montant_total)
+            "montant_total": str(commande.montant_total)  # Convertir Decimal en string
         })
     return jsonify({'message': 'Order not found'}), 404
-
-
-
-# Endpoint to create a new order (admin only)
 
 @app.route('/orders', methods=['POST'])
 @token_required
 @admin_required
-
 def create_order():
-    try:
-        data = request.json
-        # Conversion de la chaîne de date en un objet datetime.date
-        date_commande = datetime.strptime(data['date_commande'], '%Y-%m-%d').date()
+    data = request.json
+    new_order = Commande(
+        client_id=data['client_id'],
+        date_commande=datetime.today(),
+        statut=data.get('statut', 'En cours'),
+        montant_total=data['montant_total']
+    )
+    db.session.add(new_order)
+    db.session.commit()
 
-        new_order = Commande(
-            client_id=data['client_id'],
-            date_commande=date_commande,
-            statut=data.get('statut', 'En cours'),
-            montant_total=data['montant_total']
-        )
-        db.session.add(new_order)
-        db.session.commit()
-        return jsonify({
-            "id": new_order.id,
-            "client_id": new_order.client_id,
-            "date_commande": new_order.date_commande.isoformat(),
-            "statut": new_order.statut,
-            "montant_total": str(new_order.montant_total)
-        }), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+    # Publier un message à Rabbit_MQ
+    message = {
+        "order_id": new_order.id,
+        "client_id": new_order.client_id,
+        "montant_total": str(new_order.montant_total)  # Convertir Decimal en string
+    }
+    publish_message('order_notifications', message)
+
+    return jsonify({"id": new_order.id, "client_id": new_order.client_id, "montant_total": str(new_order.montant_total)}), 201
 
 # Endpoint to update an order (admin only)
 @app.route('/orders/<int:id>', methods=['PUT'])
@@ -177,7 +168,6 @@ def update_order(id):
         }), 200
     return jsonify({'message': 'Order not found'}), 404
 
-
 # Endpoint to delete an order (admin only)
 @app.route('/orders/<int:id>', methods=['DELETE'])
 @token_required
@@ -191,4 +181,4 @@ def delete_order(id):
     return jsonify({'message': 'Order not found'}), 404
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5003)
