@@ -3,7 +3,9 @@ from functools import wraps
 import secrets
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date, datetime  # Utilisez `date` pour obtenir la date actuelle
-from API.rabbit__mq import *
+from API.rabbit__mq import *  # Import absolu
+from API.pika_config import get_rabbitmq_connection
+
 
 # Initialisation de l'application Flask
 app = Flask(__name__)
