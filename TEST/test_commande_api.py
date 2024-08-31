@@ -17,6 +17,9 @@ class CommandeTestCase(unittest.TestCase):
         db.session.add(self.order1)
         db.session.commit()
 
+        # Reload the order to attach it to the current session
+        self.order1 = Commande.query.first()
+
         # Create a token for testing
         response = self.app.post('/login', json={
             'username': 'admin',
