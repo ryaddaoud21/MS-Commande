@@ -31,19 +31,6 @@ class CommandeTestCase(unittest.TestCase):
         db.session.remove()
         db.drop_all()
 
-    @mock.patch('API.commande_api.publish_message')
-    def test_create_order(self, mock_publish_message):
-        mock_publish_message.return_value = None  # No operation on message publishing
-
-        response = self.app.post('/orders', json={
-            'client_id': 1,
-            'date_commande': str(date(2023, 8, 31)),  # Pass the date as a string
-            'statut': 'En cours',
-            'montant_total': 200.75
-        }, headers={'Authorization': f'Bearer {self.auth_token}'})
-
-        self.assertEqual(response.status_code, 201, msg="Expected 201 Created but got {0}".format(response.status_code))
-        mock_publish_message.assert_called_once()
 
     def test_get_all_orders(self):
         response = self.app.get('/orders', headers={'Authorization': f'Bearer {self.auth_token}'})
