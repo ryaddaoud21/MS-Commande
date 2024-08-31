@@ -86,6 +86,8 @@ class CommandeTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         response = self.app.get(f'/orders/{order.id}', headers={'Authorization': f'Bearer {self.admin_token}'})
         #self.assertEqual(response.status_code, 404)
+        #self.assertEqual(response.status_code, 404)
+
         self.assertEqual(response.status_code, 200)
 
 
