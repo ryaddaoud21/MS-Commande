@@ -1,0 +1,7 @@
+Flask==2.0.1
+Flask-SQLAlchemy==2.5.1
+pymysql==1.0.2
+cryptography==3.4.7  # Pour gérer la sécurité et les tokens
+gunicorn==20.1.0  # Serveur WSGI pour déploiement
+pytest==6.2.4  # Pour les tests unitaires
+requests==2.25.1  # Pour faire des requêtes HTTP
