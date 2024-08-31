@@ -3,7 +3,7 @@ from functools import wraps
 import secrets
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date, datetime  # Utilisez `date` pour obtenir la date actuelle
-from .rabbit__mq import *
+from API.rabbit__mq import *
 
 # Initialisation de l'application Flask
 app = Flask(__name__)
