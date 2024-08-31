@@ -129,6 +129,7 @@ def get_order(id):
 @app.route('/orders', methods=['POST'])
 @token_required
 @admin_required
+
 def create_order():
     data = request.json
     new_order = Commande(
@@ -140,15 +141,23 @@ def create_order():
     db.session.add(new_order)
     db.session.commit()
 
-    # Publier un message à Rabbit_MQ
-    message = {
+    # Publier un message à RabbitMQ pour notifier la création de commande
+    order_message = {
         "order_id": new_order.id,
         "client_id": new_order.client_id,
         "montant_total": str(new_order.montant_total)  # Convertir Decimal en string
     }
-    publish_message('order_notifications', message)
+    publish_message('order_notifications', order_message)
+
+    # Publier un message pour mettre à jour les stocks
+    stock_message = {
+        "product_id": data['product_id'],  # Assurez-vous que l'ID du produit est fourni dans la requête
+        "quantity": data['quantity']  # Quantité commandée
+    }
+    publish_message('update_stock', stock_message)
 
     return jsonify({"id": new_order.id, "client_id": new_order.client_id, "montant_total": str(new_order.montant_total)}), 201
+
 
 # Endpoint to update an order (admin only)
 @app.route('/orders/<int:id>', methods=['PUT'])

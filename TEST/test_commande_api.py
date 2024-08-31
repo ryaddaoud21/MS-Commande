@@ -2,6 +2,8 @@ import unittest
 import json
 from datetime import date, datetime
 from API.commande_api import app, db, Commande
+from unittest import TestCase, mock
+
 
 class CommandeTestCase(unittest.TestCase):
 
@@ -62,13 +64,21 @@ class CommandeTestCase(unittest.TestCase):
         data = json.loads(response.data)
         self.assertEqual(data['client_id'], 1)
 
-    def test_create_order(self):
+    @mock.patch('API.commande_api.publish_message')  # Mocking the publish_message function
+    def test_create_order(self, mock_publish_message):
+        mock_publish_message.return_value = None  # No operation on message publishing
+
         response = self.app.post('/orders', json={
             'client_id': 1,
-            'date_commande': '2023-08-31',  # Format correct pour la date
-            'montant_total': 100.50
-        }, headers={'Authorization': f'Bearer {self.admin_token}'})
+            'date_commande': '2023-08-31',
+            'statut': 'En cours',
+            'montant_total': 200.75
+        })
+
         self.assertEqual(response.status_code, 201, msg="Expected 201 Created but got {0}".format(response.status_code))
+
+        # Check that the publish_message function was called once
+        mock_publish_message.assert_called_once()
 
     def test_update_order(self):
         order = Commande.query.get(self.order1.id)
