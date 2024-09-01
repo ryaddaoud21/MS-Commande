@@ -133,6 +133,7 @@ def get_order(id):
 @app.route('/orders', methods=['POST'])
 @token_required
 @admin_required
+
 def create_order():
     data = request.json
     new_order = Commande(
@@ -145,7 +146,7 @@ def create_order():
     db.session.add(new_order)
     db.session.commit()
 
-    # Publier un message à RabbitMQ pour notifier la création de commande et la mise à jour du stock
+    # Publier un message à RabbitMQ pour notifier la création de la commande
     order_message = {
         "order_id": new_order.id,
         "client_id": new_order.client_id,
@@ -155,11 +156,11 @@ def create_order():
     publish_message('order_notifications', order_message)
 
     # Publier un message spécifique pour la mise à jour du stock
-    #stock_update_message = {
-    #    "produit_id": new_order.produit_id,
-    #    "quantite": 1  # Par exemple, on retire 1 du stock pour chaque commande
-    #}
-    #publish_message('stock_update', stock_update_message)
+    stock_update_message = {
+        "produit_id": new_order.produit_id,
+        "quantite": 1  # Par exemple, on retire 1 du stock pour chaque commande
+    }
+    publish_message('stock_update', stock_update_message)
 
     return jsonify({"id": new_order.id, "client_id": new_order.client_id, "produit_id": new_order.produit_id, "montant_total": str(new_order.montant_total)}), 201
 
