@@ -31,6 +31,28 @@ class CommandeTestCase(unittest.TestCase):
         db.session.remove()
         db.drop_all()
 
+    @mock.patch('API.commande_api.publish_message')
+    def test_create_order(self, mock_publish_message):
+        # Mock the publish_message function to prevent actual RabbitMQ interactions
+        mock_publish_message.return_value = None
+
+        # Create a new order using the API
+        response = self.app.post('/orders', json={
+            'client_id': 2,
+            'date_commande': str(date(2023, 9, 1)),  # Simuler une date
+            'statut': 'En cours',
+            'montant_total': 150.00
+        }, headers={'Authorization': f'Bearer {self.auth_token}'})
+
+        # Vérifiez que la commande a été créée avec succès
+        self.assertEqual(response.status_code, 201, msg="Expected 201 Created but got {0}".format(response.status_code))
+        data = response.json
+        self.assertEqual(data['client_id'], 2)
+        self.assertEqual(data['montant_total'], '150.00')  # Vérifiez que le montant total est correct
+
+        # Vérifiez que la fonction publish_message a été appelée une fois
+        mock_publish_message.assert_called_once()
+
 
     def test_get_all_orders(self):
         response = self.app.get('/orders', headers={'Authorization': f'Bearer {self.auth_token}'})
