@@ -3,6 +3,7 @@ from unittest import mock
 from datetime import date
 from API.commande_api import app, db, Commande
 
+
 class CommandeTestCase(unittest.TestCase):
     def setUp(self):
         self.app = app.test_client()
@@ -13,7 +14,8 @@ class CommandeTestCase(unittest.TestCase):
         db.create_all()
 
         # Create some test data with correct date object
-        self.order1 = Commande(client_id=1, date_commande=date(2023, 8, 31), statut='En cours', montant_total=100.50)
+        self.order1 = Commande(client_id=1, produit_id=10, date_commande=date(2023, 8, 31), statut='En cours',
+                               montant_total=100.50)
         db.session.add(self.order1)
         db.session.commit()
 
@@ -39,6 +41,7 @@ class CommandeTestCase(unittest.TestCase):
         # Create a new order using the API
         response = self.app.post('/orders', json={
             'client_id': 2,
+            'produit_id': 20,  # Simuler un produit_id
             'date_commande': str(date(2023, 9, 1)),  # Simuler une date
             'statut': 'En cours',
             'montant_total': 150.00
@@ -48,11 +51,11 @@ class CommandeTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 201, msg="Expected 201 Created but got {0}".format(response.status_code))
         data = response.json
         self.assertEqual(data['client_id'], 2)
+        self.assertEqual(data['produit_id'], 20)  # Vérifiez que le produit_id est correct
         self.assertEqual(data['montant_total'], '150.00')  # Vérifiez que le montant total est correct
 
         # Vérifiez que la fonction publish_message a été appelée une fois
         mock_publish_message.assert_called_once()
-
 
     def test_get_all_orders(self):
         response = self.app.get('/orders', headers={'Authorization': f'Bearer {self.auth_token}'})
@@ -60,19 +63,21 @@ class CommandeTestCase(unittest.TestCase):
         data = response.json
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]['client_id'], 1)
+        self.assertEqual(data[0]['produit_id'], 10)  # Vérifiez que le produit_id est correct
 
     def test_get_order_by_id(self):
         response = self.app.get(f'/orders/{self.order1.id}', headers={'Authorization': f'Bearer {self.auth_token}'})
         self.assertEqual(response.status_code, 200)
         data = response.json
         self.assertEqual(data['client_id'], 1)
+        self.assertEqual(data['produit_id'], 10)  # Vérifiez que le produit_id est correct
 
     def test_update_order(self):
         response = self.app.put(f'/orders/{self.order1.id}', json={
             'statut': 'Livré',
             'montant_total': 150.75
         }, headers={'Authorization': f'Bearer {self.auth_token}'})
-        
+
         self.assertEqual(response.status_code, 200)
         data = response.json
         self.assertEqual(data['statut'], 'Livré')
