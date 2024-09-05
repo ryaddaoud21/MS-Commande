@@ -8,3 +8,4 @@ pytest==6.2.4
 requests==2.25.1
 Werkzeug==2.0.1
 pika==1.2.0  # Assurez-vous que pika est inclus pour RabbitMQ
+waitress==2.1.2

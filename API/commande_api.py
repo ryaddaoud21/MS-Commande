@@ -3,15 +3,17 @@ from functools import wraps
 import secrets
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date, datetime  # Utilisez `date` pour obtenir la date actuelle
-from API.rabbit__mq import *  # Import absolu
-from API.pika_config import get_rabbitmq_connection
+from .rabbit__mq import *  # Import absolu
+from .pika_config import get_rabbitmq_connection
 
 
 # Initialisation de l'application Flask
 app = Flask(__name__)
 
 # Configuration de la base de données MySQL
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root@localhost/commande_db'
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root@localhost/commande_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root@mysql-db/commande_db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialisation de SQLAlchemy
@@ -198,4 +200,4 @@ def delete_order(id):
     return jsonify({'message': 'Order not found'}), 404
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5003)
+    app.run(host='0.0.0.0', port=5003)
