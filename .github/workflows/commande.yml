@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Build and Push Commande Docker Image
 
 on:
   push:
@@ -22,13 +22,9 @@ jobs:
     - name: Log in to Docker Hub
       run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-    - name: Build Docker image
-      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/my-app:${{ github.sha }} .
-
-    - name: Push Docker image
+    - name: Build and push commande image
       run: |
-        docker tag ${{ secrets.DOCKER_USERNAME }}/my-app:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/my-app:latest
-        docker push ${{ secrets.DOCKER_USERNAME }}/my-app:${{ github.sha }}
-        docker push ${{ secrets.DOCKER_
-USERNAME }}/my-app:latest
-ce fichier est pour les 03 microservice ?
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/ms-commande:${{ github.sha }} .
+        docker tag ${{ secrets.DOCKER_USERNAME }}/ms-commande:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/ms-commande:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/ms-commande:${{ github.sha }}
+        docker push ${{ secrets.DOCKER_USERNAME }}/ms-commande:latest
