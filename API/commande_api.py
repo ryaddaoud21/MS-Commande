@@ -2,18 +2,15 @@ from flask import Flask, jsonify, request, make_response
 from functools import wraps
 import secrets
 from flask_sqlalchemy import SQLAlchemy
-from datetime import date, datetime  # Utilisez `date` pour obtenir la date actuelle
-from .rabbit__mq import *  # Import absolu
+from datetime import date, datetime
+from .rabbit__mq import publish_message  # Import pour RabbitMQ
 from .pika_config import get_rabbitmq_connection
-
 
 # Initialisation de l'application Flask
 app = Flask(__name__)
 
 # Configuration de la base de données MySQL
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root@localhost/commande_db'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root@mysql-db/commande_db'
-
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialisation de SQLAlchemy
@@ -33,14 +30,14 @@ class Commande(db.Model):
     def __repr__(self):
         return f'<Commande {self.id} pour Client {self.client_id}>'
 
-# Simulated token storage (In a real application, use a database or other secure storage)
+# Stockage simulé des tokens
 valid_tokens = {}
 
-# Function to generate a secure token
+# Fonction pour générer un token sécurisé
 def generate_token():
     return secrets.token_urlsafe(32)
 
-# Decorator to require a valid token
+# Décorateur pour exiger un token valide
 def token_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -60,7 +57,7 @@ def token_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Decorator to require admin role
+# Décorateur pour exiger le rôle d'administrateur
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -69,7 +66,7 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Endpoint to login and generate a token
+# Endpoint pour se connecter et générer un token
 @app.route('/login', methods=['POST'])
 def login():
     if not request.json or not 'username' in request.json or not 'password' in request.json:
@@ -78,7 +75,7 @@ def login():
     username = request.json['username']
     password = request.json['password']
 
-    # Simple user validation (hardcoded users)
+    # Validation simple des utilisateurs (utilisateurs codés en dur)
     users = {
         "admin": {"password": "password", "role": "admin"},
         "user1": {"password": "userpass", "role": "user"},
@@ -91,7 +88,7 @@ def login():
 
     return jsonify({"msg": "Invalid credentials"}), 401
 
-# Endpoint to logout and invalidate the token
+# Endpoint pour se déconnecter et invalider le token
 @app.route('/logout', methods=['POST'])
 @token_required
 def logout():
@@ -102,7 +99,7 @@ def logout():
         return jsonify({"msg": "Successfully logged out"}), 200
     return make_response(jsonify({"error": "Unauthorized"}), 401)
 
-# Endpoint to get all orders
+# Endpoint pour récupérer toutes les commandes
 @app.route('/orders', methods=['GET'])
 @token_required
 def get_orders():
@@ -116,6 +113,7 @@ def get_orders():
         "montant_total": str(c.montant_total)  # Convertir Decimal en string
     } for c in commandes])
 
+# Endpoint pour récupérer une commande spécifique par ID
 @app.route('/orders/<int:id>', methods=['GET'])
 @token_required
 def get_order(id):
@@ -131,11 +129,10 @@ def get_order(id):
         })
     return jsonify({'message': 'Order not found'}), 404
 
-
+# Endpoint pour créer une nouvelle commande (admin uniquement)
 @app.route('/orders', methods=['POST'])
 @token_required
 @admin_required
-
 def create_order():
     data = request.json
     new_order = Commande(
@@ -166,7 +163,7 @@ def create_order():
 
     return jsonify({"id": new_order.id, "client_id": new_order.client_id, "produit_id": new_order.produit_id, "montant_total": str(new_order.montant_total)}), 201
 
-# Endpoint to update an order (admin only)
+# Endpoint pour mettre à jour une commande (admin uniquement)
 @app.route('/orders/<int:id>', methods=['PUT'])
 @token_required
 @admin_required
@@ -187,7 +184,7 @@ def update_order(id):
         }), 200
     return jsonify({'message': 'Order not found'}), 404
 
-# Endpoint to delete an order (admin only)
+# Endpoint pour supprimer une commande (admin uniquement)
 @app.route('/orders/<int:id>', methods=['DELETE'])
 @token_required
 @admin_required
