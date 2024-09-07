@@ -99,6 +99,11 @@ def logout():
         return jsonify({"msg": "Successfully logged out"}), 200
     return make_response(jsonify({"error": "Unauthorized"}), 401)
 
+
+@app.route('/')
+def home():
+    return jsonify({"message": "Welcome to the Commande API"}), 200
+
 # Endpoint pour récupérer toutes les commandes
 @app.route('/orders', methods=['GET'])
 @token_required
