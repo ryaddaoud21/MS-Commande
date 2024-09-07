@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 5003
 
 # Commande pour démarrer l'application Flask avec Waitress et le consommateur RabbitMQ
-CMD ["waitress-serve", "--port=5003", "API.commande_api:app"]
+CMD ["waitress-serve", "--port=5003", "commande_api:app"]

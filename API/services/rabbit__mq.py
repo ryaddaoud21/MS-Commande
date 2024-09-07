@@ -1,6 +1,5 @@
-import pika
 import json
-from .pika_config import get_rabbitmq_connection
+from API.services.pika_config import get_rabbitmq_connection
 #TEST : PROBLEME DE Récupération
 
 def publish_message(exchange, message):
