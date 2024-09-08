@@ -3,9 +3,35 @@ from API.models import db, Commande
 from API.auth import token_required, admin_required
 from API.services.rabbit__mq import publish_message  # RabbitMQ pour la publication des messages
 from datetime import datetime
+from flask import Flask, jsonify, request, make_response
+from prometheus_client import Counter, Summary, generate_latest
+from prometheus_client.core import CollectorRegistry
+from prometheus_client import CONTENT_TYPE_LATEST
+from functools import wraps
+import time
+
 
 # Création du blueprint pour les commandes
 commandes_blueprint = Blueprint('commandes', __name__)
+
+
+# Configuration des métriques Prometheus
+REQUEST_COUNTER = Counter('commande_requests_total', 'Total number of requests for commandes')
+REQUEST_LATENCY = Summary('commande_processing_seconds', 'Time spent processing commande requests')
+
+# Endpoint pour exporter les métriques Prometheus
+@commandes_blueprint.route('/metrics')
+def metrics():
+    return generate_latest(), 200, {'Content-Type': CONTENT_TYPE_LATEST}
+
+# Décorateur pour le suivi des métriques
+def track_metrics(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        REQUEST_COUNTER.inc()  # Incrément du compteur de requêtes
+        with REQUEST_LATENCY.time():  # Mesure du temps de traitement
+            return f(*args, **kwargs)
+    return decorated_function
 
 # Endpoint pour récupérer toutes les commandes (GET)
 @commandes_blueprint.route('/orders', methods=['GET'])
