@@ -76,4 +76,4 @@ def logout():
 
 @auth_blueprint.route('/', methods=['GET'])
 def index():
-    return jsonify({"msg": "Welcome to the ORDERS'API. The service is up and running!"}), 200
+    return jsonify({"msg": "Welcome to the ORDER's API. The service is up and running!"}), 200
