@@ -43,12 +43,9 @@ def get_order(id):
 @admin_required
 def create_order():
     data = request.json
-    if not all(key in data for key in ['client_id', 'produit_id', 'montant_total']):
-        return jsonify({'message': 'Client ID, Produit ID, et Montant Total sont obligatoires'}), 400
-
     new_order = Commande(
         client_id=data['client_id'],
-        produit_id=data['produit_id'],
+        produit_id=data['produit_id'],  # Assurez-vous que l'ID du produit est fourni dans la requête
         date_commande=datetime.today(),
         statut=data.get('statut', 'En cours'),
         montant_total=data['montant_total']
@@ -60,24 +57,21 @@ def create_order():
     order_message = {
         "order_id": new_order.id,
         "client_id": new_order.client_id,
-        "produit_id": new_order.produit_id,
-        "montant_total": str(new_order.montant_total)
+        "produit_id": new_order.produit_id,  # Inclure le produit_id dans le message
+        "montant_total": str(new_order.montant_total)  # Convertir Decimal en string
     }
     publish_message('order_notifications', order_message)
 
     # Publier un message spécifique pour la mise à jour du stock
     stock_update_message = {
         "produit_id": new_order.produit_id,
-        "quantite": 1  # Retirer 1 du stock pour chaque commande
+        "quantite": 1  # Par exemple, on retire 1 du stock pour chaque commande
     }
     publish_message('stock_update', stock_update_message)
 
-    return jsonify({
-        "id": new_order.id,
-        "client_id": new_order.client_id,
-        "produit_id": new_order.produit_id,
-        "montant_total": str(new_order.montant_total)
-    }), 201
+    return jsonify({"id": new_order.id, "client_id": new_order.client_id, "produit_id": new_order.produit_id,
+                    "montant_total": str(new_order.montant_total)}), 201
+
 
 # Endpoint pour mettre à jour une commande par ID (PUT)
 @commandes_blueprint.route('/orders/<int:id>', methods=['PUT'])
