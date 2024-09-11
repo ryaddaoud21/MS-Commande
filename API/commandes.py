@@ -14,7 +14,6 @@ import time
 # Création du blueprint pour les commandes
 commandes_blueprint = Blueprint('commandes', __name__)
 
-COMMANDE_REQUEST_COUNT = Counter('commande_requests_total', 'Total number of requests for commandes')
 
 # Configuration des métriques Prometheus
 REQUEST_COUNTER = Counter('commande_requests_total', 'Total number of requests for commandes')
@@ -37,6 +36,7 @@ def track_metrics(f):
 # Endpoint pour récupérer toutes les commandes (GET)
 @commandes_blueprint.route('/orders', methods=['GET'])
 @token_required
+@track_metrics
 def get_orders():
     commandes = Commande.query.all()
     return jsonify([{
@@ -49,8 +49,11 @@ def get_orders():
     } for c in commandes]), 200
 
 # Endpoint pour récupérer une commande spécifique par ID (GET)
+
 @commandes_blueprint.route('/orders/<int:id>', methods=['GET'])
 @token_required
+@track_metrics
+
 def get_order(id):
     commande = Commande.query.get(id)
     if commande:
@@ -68,8 +71,8 @@ def get_order(id):
 @commandes_blueprint.route('/orders', methods=['POST'])
 @token_required
 @admin_required
+@track_metrics
 def create_order():
-    COMMANDE_REQUEST_COUNT.inc()  # Incrémentation de la métrique
     data = request.json
     new_order = Commande(
         client_id=data['client_id'],
@@ -105,6 +108,8 @@ def create_order():
 @commandes_blueprint.route('/orders/<int:id>', methods=['PUT'])
 @token_required
 @admin_required
+@track_metrics
+
 def update_order(id):
     order = Commande.query.get(id)
     if not order:
@@ -136,6 +141,8 @@ def update_order(id):
 @commandes_blueprint.route('/orders/<int:id>', methods=['DELETE'])
 @token_required
 @admin_required
+@track_metrics
+
 def delete_order(id):
     commande = Commande.query.get(id)
     if not commande:
