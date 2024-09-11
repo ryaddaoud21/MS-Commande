@@ -14,6 +14,7 @@ import time
 # Création du blueprint pour les commandes
 commandes_blueprint = Blueprint('commandes', __name__)
 
+COMMANDE_REQUEST_COUNT = Counter('commande_requests_total', 'Total number of requests for commandes')
 
 # Configuration des métriques Prometheus
 REQUEST_COUNTER = Counter('commande_requests_total', 'Total number of requests for commandes')
@@ -68,6 +69,7 @@ def get_order(id):
 @token_required
 @admin_required
 def create_order():
+    COMMANDE_REQUEST_COUNT.inc()  # Incrémentation de la métrique
     data = request.json
     new_order = Commande(
         client_id=data['client_id'],
