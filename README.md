@@ -1,82 +1,113 @@
+
 # MS-Commande
 
+## Microservice Commande
 
-# Microservice Client
+### Description
 
-## Description
+Le microservice `Commande` gère la gestion des commandes. Il permet de créer, lire, mettre à jour et supprimer des commandes dans une base de données MySQL. De plus, il expose des métriques pour la surveillance via Prometheus et Grafana.
 
-Le microservice `Client` est responsable de la gestion des informations des clients. Il permet de créer, lire, mettre à jour et supprimer des clients dans la base de données.
+### Architectu
+![Ajouter un sous-titre (2)](https://github.com/user-attachments/assets/854a8ecb-6195-4a31-8cf7-aaa1630bb0f1)
+re
 
-## Installation
+Le microservice `MS-Commande` fait partie d'une architecture microservices plus large, qui comprend également :
+
+- **MS-Client** : Microservice pour la gestion des clients.
+- **MS-Produit** : Microservice pour la gestion des produits.
+- **RabbitMQ** : Service de messagerie pour la communication entre les microservices.
+- **Prometheus** : Outil de surveillance pour collecter les métriques des microservices.
+- **Grafana** : Plateforme d'analyse et de visualisation des métriques Prometheus.
+- **MySQL** : Base de données pour les microservices `Client`, `Produit` et `Commande`.
 
 ### Prérequis
 
-- Python 3.9+
-- MySQL
-- `pip` pour installer les dépendances
+Avant de commencer, assurez-vous que vous avez installé les éléments suivants :
 
-### Étapes d'installation
+- **Docker** : Utilisé pour exécuter les conteneurs.
+- **Docker Compose** : Utilisé pour orchestrer plusieurs conteneurs Docker.
+- **Prometheus** : Utilisé pour surveiller les performances des microservices.
+- **Grafana** : Utilisé pour visualiser les métriques collectées par Prometheus.
+- **Git** : Pour cloner les dépôts de microservices.
 
-1. Clonez le dépôt :
+### Installation et Démarrage avec Docker Compose
+
+1. **Clonez le dépôt du microservice Commande :**
+
    ```bash
-   git clone https://github.com/votre-utilisateur/MS-Client.git
-   cd MS-Client
+   git clone https://github.com/ryaddaoud21/MS-Commande.git
+   cd MS-Commande
    ```
 
-2. Créez un environnement virtuel et activez-le :
+2. **Récupérer le fichier `docker-compose.yml` pour l'architecture complète :**
+   Clonez le dépôt du microservice : https://github.com/ryaddaoud21/microservices-deployment
+   Ce fichier orchestrera tous les services nécessaires, y compris Prometheus, Grafana, RabbitMQ, MySQL et les microservices.
+
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # Sur Windows: venv\Scripts\activate
+   docker-compose up -d
    ```
 
-3. Installez les dépendances :
+3. **Vérifiez que les services sont bien démarrés :**
+
    ```bash
-   pip install -r requirements.txt
+   docker-compose ps
    ```
 
-4. Configurez la base de données MySQL :
-   - Créez une base de données nommée `client_db`.
-   - Mettez à jour les paramètres de connexion à la base de données dans `client_api.py` si nécessaire.
+4. **Tester le microservice :**
 
-5. Exécutez les migrations de la base de données (si applicable) :
+   Pour exécuter les tests unitaires dans ce projet, utilisez la commande suivante :
+
    ```bash
-   flask db upgrade
+   python -m unittest discover -s TEST | pytest
    ```
-
-## Utilisation
-
-### Lancer l'application
-
-```bash
-python API/client_api.py
-```
-
-L'application sera disponible à l'adresse `http://127.0.0.1:5000/`.
 
 ### Endpoints
 
 - **POST** `/login` : Authentification et génération de token.
-- **GET** `/customers` : Récupère la liste de tous les clients.
-- **GET** `/customers/<id>` : Récupère les détails d'un client spécifique.
-- **POST** `/customers` : Crée un nouveau client (réservé aux administrateurs).
-- **PUT** `/customers/<id>` : Met à jour les informations d'un client (réservé aux administrateurs).
-- **DELETE** `/customers/<id>` : Supprime un client (réservé aux administrateurs).
+- **GET** `/orders` : Récupère la liste de toutes les commandes.
+- **GET** `/orders/<id>` : Récupère les détails d'une commande spécifique.
+- **POST** `/orders` : Crée une nouvelle commande (réservé aux administrateurs).
+- **PUT** `/orders/<id>` : Met à jour les informations d'une commande (réservé aux administrateurs).
+- **DELETE** `/orders/<id>` : Supprime une commande (réservé aux administrateurs).
 
-### Tests
+### Surveillance et Visualisation
 
-Pour exécuter les tests unitaires :
+- **Prometheus** collecte les métriques du microservice.
+- **Grafana** visualise ces métriques pour surveiller la performance et les ressources du microservice.
 
-```bash
-python -m unittest discover -s TEST
+### Arborescence du projet
+
+```
+MS-Commande/
+├── .github/                # Configurations spécifiques à GitHub
+├── .idea/                  # Configurations IDE
+├── API/
+│   ├── __pycache__/        # Fichiers Python compilés
+│   ├── services/
+│   │   ├── pika_config.py  # Configuration de la connexion RabbitMQ
+│   │   ├── rabbit__mq.py   # Service RabbitMQ pour la gestion des commandes
+│   ├── commandes.py        # Endpoints de l'API pour la gestion des commandes
+│   ├── config.py           # Configuration de Flask et du service
+│   ├── models.py           # Modèles de base de données liés aux commandes
+├── TEST/
+│   ├── __pycache__/        # Fichiers Python compilés pour les tests
+│   ├── __init__.py         # Initialisation de la suite de tests
+│   ├── test_commandes.py   # Tests pour les fonctionnalités liées aux commandes
+│   ├── test_auth.py   
+│   ├── test_config.py  
+├── .gitignore              # Fichiers et répertoires à ignorer dans le contrôle de version
+├── Dockerfile              # Configuration Docker pour la conteneurisation du service
+├── README.md               # Documentation du service MS-Commande
+├── commande_api.py         # Point d'entrée pour exécuter l'application Flask
+├── requirements.txt        # Dépendances Python pour le projet
 ```
 
-## CI/CD
+### Ports
 
-Le pipeline CI/CD est configuré avec GitHub Actions. Les tests sont exécutés automatiquement à chaque commit ou pull request. Si les tests échouent, une nouvelle branche est créée pour corriger les erreurs.
-
-## Contribuer
-
-Les contributions sont les bienvenues. Veuillez soumettre une pull request ou signaler un problème via GitHub.
-
-## License
-
+- **Client-Service** : `5001`
+- **Produit-Service** : `5002`
+- **Commande-Service** : `5003`
+- **Prometheus** : `9090`
+- **Grafana** : `3000`
+- **RabbitMQ** : `5672` (AMQP) / `15672` (management)
+  
