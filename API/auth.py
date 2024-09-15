@@ -23,7 +23,7 @@ def token_required(f):
         token = token.split('Bearer ')[1]
 
         # Make an API request to MS-utilisateurs to validate the token
-        response = requests.post('http://ms-utilisateurs:5004/validate_token', json={"token": token})
+        response = requests.post('http://localhost:5004/validate_token', json={"token": token})
 
         if response.status_code != 200:
             return make_response(jsonify({"error": "Unauthorized"}), 401)
