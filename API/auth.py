@@ -11,6 +11,31 @@ valid_tokens = {}
 def generate_token():
     return secrets.token_urlsafe(32)
 
+import requests
+
+def token_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        if not token or not token.startswith('Bearer '):
+            return make_response(jsonify({"error": "Unauthorized"}), 401)
+
+        token = token.split('Bearer ')[1]
+
+        # Make an API request to MS-utilisateurs to validate the token
+        response = requests.post('http://ms-utilisateurs:5004/validate_token', json={"token": token})
+
+        if response.status_code != 200:
+            return make_response(jsonify({"error": "Unauthorized"}), 401)
+
+        user_data = response.json()
+        request.user = user_data['user']
+        request.role = user_data['role']
+
+        return f(*args, **kwargs)
+    return decorated_function
+
+'''
 # Décorateur pour exiger un token valide
 def token_required(f):
     @wraps(f)
@@ -30,7 +55,7 @@ def token_required(f):
 
         return f(*args, **kwargs)
     return decorated_function
-
+'''
 # Décorateur pour exiger le rôle d'administrateur
 def admin_required(f):
     @wraps(f)
@@ -39,7 +64,7 @@ def admin_required(f):
             return make_response(jsonify({"error": "Forbidden"}), 403)
         return f(*args, **kwargs)
     return decorated_function
-
+'''
 # Endpoint pour se connecter et générer un token
 @auth_blueprint.route('/login', methods=['POST'])
 def login():
@@ -73,6 +98,8 @@ def logout():
         return jsonify({"msg": "Successfully logged out"}), 200
     return make_response(jsonify({"error": "Unauthorized"}), 401)
 
+
+'''
 
 @auth_blueprint.route('/', methods=['GET'])
 def index():
