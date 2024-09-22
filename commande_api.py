@@ -1,9 +1,8 @@
 from flask import Flask
 from API.models import db
 from API.auth import auth_blueprint
-from API.commandes import commandes_blueprint
+from API.commandes import commandes_blueprint, start_rabbitmq_consumers
 from API.config import Config
-from API.services.rabbit__mq import start_rabbitmq_consumers
 
 app = Flask(__name__)
 app.config.from_object(Config)
