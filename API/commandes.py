@@ -42,7 +42,7 @@ def consume_client_deletion_notifications(app):
     channel = connection.channel()
     channel.exchange_declare(exchange='client_deletion_exchange', exchange_type='fanout')
 
-    result = channel.queue_declare(queue='', exclusive=True)  # Utilisation d'une queue exclusive
+    result = channel.queue_declare(queue='client_deletion_queue', durable=True)  # Modifier la queue pour être durable
     queue_name = result.method.queue
 
     channel.queue_bind(exchange='client_deletion_exchange', queue=queue_name)
