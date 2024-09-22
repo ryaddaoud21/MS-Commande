@@ -142,7 +142,6 @@ def update_order(id):
 @token_required
 @admin_required
 @track_metrics
-
 def delete_order(id):
     commande = Commande.query.get(id)
     if not commande:
