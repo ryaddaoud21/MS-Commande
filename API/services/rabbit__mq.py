@@ -14,38 +14,40 @@ def publish_message(exchange, message):
         routing_key='',
         body=json.dumps(message)
     )
-
     connection.close()
 
 
-def delete_orders_for_client(ch, method, properties, body):
-    data = json.loads(body)
-    client_id = data.get('client_id')
-
-    if client_id:
-        # Supprimer toutes les commandes associées à ce client
-        Commande.query.filter_by(client_id=client_id).delete()
-        db.session.commit()
-        print(f"Deleted all orders for client_id {client_id}")
-
-    ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
-def start_consuming():
+# Consommateur RabbitMQ pour la suppression des commandes d'un client
+def consume_client_deletion_notifications(app):
     connection = get_rabbitmq_connection()
     channel = connection.channel()
-
-    # Déclarer l'exchange et la queue pour les suppressions de clients
     channel.exchange_declare(exchange='client_deletion_exchange', exchange_type='fanout')
-    channel.queue_declare(queue='client_deletion_queue', durable=True)
-    channel.queue_bind(exchange='client_deletion_exchange', queue='client_deletion_queue')
 
-    # Consommer les messages
-    channel.basic_consume(queue='client_deletion_queue', on_message_callback=delete_orders_for_client)
+    result = channel.queue_declare(queue='', exclusive=True)  # Utilisation d'une queue exclusive
+    queue_name = result.method.queue
 
-    print('Waiting for messages to delete orders for deleted clients...')
+    channel.queue_bind(exchange='client_deletion_exchange', queue=queue_name)
+
+    def callback(ch, method, properties, body):
+        with app.app_context():  # Activer le contexte de l'application Flask
+            try:
+                message = json.loads(body)
+                client_id = message.get('client_id')
+                if client_id:
+                    # Supprimer toutes les commandes associées au client supprimé
+                    Commande.query.filter_by(client_id=client_id).delete()
+                    db.session.commit()
+                    print(f"Deleted all orders for client_id {client_id}")
+            except Exception as e:
+                print(f"Error processing client deletion: {str(e)}")
+
+    channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
     channel.start_consuming()
 
 
+# Lancer les threads pour consommer les messages RabbitMQ
 def start_rabbitmq_consumers(app):
-    threading.Thread(target=start_consuming, args=(app,), daemon=True).start()
+    # Démarrer le consommateur de suppression de clients dans un thread
+    threading.Thread(target=consume_client_deletion_notifications, args=(app,), daemon=True).start()
