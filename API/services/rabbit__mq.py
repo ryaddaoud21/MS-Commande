@@ -1,8 +1,21 @@
 import json
+from flask import jsonify
+from API.commandes import commandes_blueprint
 from API.services.pika_config import get_rabbitmq_connection
 #TEST : PROBLEME DE Récupération
 from API.models import db, Commande
 import threading
+
+# A global variable to store notifications
+orders_deleted_notifications = []
+
+
+
+
+# Route to get all notifications
+@commandes_blueprint.route('/notifications', methods=['GET'])
+def get_notifications():
+    return jsonify(orders_deleted_notifications), 200
 
 def publish_message(exchange, message):
     connection = get_rabbitmq_connection()
@@ -47,7 +60,7 @@ def consume_client_deletion_notifications(app):
     channel.start_consuming()
 
 
-# Lancer les threads pour consommer les messages RabbitMQ
+
+
 def start_rabbitmq_consumers(app):
-    # Démarrer le consommateur de suppression de clients dans un thread
     threading.Thread(target=consume_client_deletion_notifications, args=(app,), daemon=True).start()
