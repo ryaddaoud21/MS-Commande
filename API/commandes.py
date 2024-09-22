@@ -1,3 +1,4 @@
+import json
 import threading
 
 from flask import Blueprint, jsonify, request
@@ -57,6 +58,10 @@ def consume_client_deletion_notifications(app):
                     Commande.query.filter_by(client_id=client_id).delete()
                     db.session.commit()
                     print(f"Deleted all orders for client_id {client_id}")
+                    formatted_message = f"Received order notification for client: {message}"
+
+                    # Store the formatted notification
+                    orders_deleted_notifications.append(formatted_message)
             except Exception as e:
                 print(f"Error processing client deletion: {str(e)}")
 
