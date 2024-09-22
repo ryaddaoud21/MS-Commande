@@ -10,6 +10,7 @@ class Commande(db.Model):
     produit_id = db.Column('ProduitID', db.Integer, nullable=False)
     date_commande = db.Column('DateCommande', db.Date, nullable=False)
     statut = db.Column('Statut', db.String(100), default='En cours')
+    quantite = db.Column('Quantite', db.Integer, nullable=False, default=1)
     montant_total = db.Column('MontantTotal', db.Numeric(10, 2), nullable=False)
 
     def __repr__(self):
