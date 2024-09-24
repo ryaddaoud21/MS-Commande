@@ -57,7 +57,7 @@ def consume_client_deletion_notifications(app):
                     Commande.query.filter_by(client_id=client_id).delete()
                     db.session.commit()
                     print(f"Deleted all orders for client_id {client_id}")
-                    formatted_message = f"Received order notification for client: {message}"
+                    formatted_message = f"Deleted all orders for client_id: {message}"
 
                     # Store the formatted notification
                     orders_deleted_notifications.append(formatted_message)
